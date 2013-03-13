@@ -13,6 +13,6 @@ Source-repository head
     location:           git://github.com/conklech/reactive-banana-gtk.git
     
 Library
-    Extensions:         Rank2Types, ScopedTypeVariables, ExistentialQuantification
+    Extensions:         Rank2Types, ExistentialQuantification
     Build-Depends:	    base, glib, gtk >= 0.12.0 && < 0.13, reactive-banana >= 0.7 && < 0.8
     Exposed-Modules:	Reactive.Banana.Gtk
