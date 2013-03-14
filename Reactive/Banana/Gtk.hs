@@ -61,7 +61,7 @@ event3 = eventN $ \f a b c -> f (a, b, c)
 monitorAttr :: 
     (Frameworks t, Gtk.GObjectClass self)
     => self
-    -> Signal self (IO ()) -- | Signal indicating when to read the attribute
+    -> Signal self (IO ()) -- ^ Signal indicating when to read the attribute
     -> ReadWriteAttr self a b
     -> Moment t (Event t a)
 monitorAttr self signal attr =
