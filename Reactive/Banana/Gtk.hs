@@ -1,7 +1,7 @@
 {-# LANGUAGE ExistentialQuantification, RankNTypes #-}
 module Reactive.Banana.Gtk (
   AttrBinding(..), eventM, event0, event1, event2, event3,
-  monitorAttr, pollAttr, sink
+  monitorF, monitorAttr, pollAttr, sink
 ) where
 
 import Reactive.Banana
@@ -18,7 +18,7 @@ eventM :: (Frameworks t, Gtk.GObjectClass self)
     -> Gtk.EventM a b
     -> Moment t (Event t b)
 eventM self signal m = 
-    fromAddHandler $ \e -> do
+    fromAddHandler $ const $ do
         callbackId <- on self signal $ m >> return False
         return $ signalDisconnect callbackId
             
@@ -58,8 +58,7 @@ event3 :: (Frameworks t, Gtk.GObjectClass self)
     -> Moment t (Event t (a, b, c))
 event3 = eventN $ \f a b c -> f (a, b, c)
 
-monitorAttr :: 
-    (Frameworks t, Gtk.GObjectClass self)
+monitorAttr :: (Frameworks t, Gtk.GObjectClass self)
     => self
     -> Signal self (IO ()) -- ^ Signal indicating when to read the attribute
     -> ReadWriteAttr self a b
@@ -69,6 +68,15 @@ monitorAttr self signal attr =
         callbackId <- on self signal $ Attrs.get self attr >>= e >> return ()
         return $ signalDisconnect callbackId
 
+monitorF :: (Frameworks t, Gtk.GObjectClass self)
+    => self
+    -> Signal self (IO ()) -- ^ Signal indicating when to read the attribute
+    -> (self -> IO a)
+    -> Moment t (Event t a)
+monitorF self signal f =
+    fromAddHandler $ \e -> do
+        callbackId <- on self signal $ f self >>= e >> return ()
+        return $ signalDisconnect callbackId
 pollAttr :: (Frameworks t) => self -> ReadWriteAttr self a b -> Moment t (Behavior t a)
 pollAttr widget attr = fromPoll $ liftIO $ Attrs.get widget attr
 
@@ -79,11 +87,11 @@ infixr 0 :==
 sink :: (Frameworks t) => self -> [AttrBinding t self] -> Moment t ()
 sink self = mapM_ sink'
   where
-    sink' (attr :== x) = do
-      i <- initial x
-      xs <- changes x
+    sink' (attr :== xB) = do
+      i <- initial xB
+      xE <- changes xB
       liftIOLater $ Attrs.set self [attr := i]
-      reactimate $ (\x -> Attrs.set self [attr := x]) <$> xs
+      reactimate $ (\x -> Attrs.set self [attr := x]) <$> xE
 
 -- reactimateEventM :: Event (Ptr a) -> Gtk.EventM a () -> Moment ()
 -- reactimateEventM event reader = reactimate $ (<$> event) $ runReaderT reader

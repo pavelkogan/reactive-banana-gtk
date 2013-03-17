@@ -1,38 +1,43 @@
 {-# LANGUAGE GADTs, ScopedTypeVariables #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RankNTypes #-}
 module Reactive.Banana.Gtk.Collections (
     ColumnBinder,
     bindTreeList, 
     bindTextCol, bindToggleCol,
-    TreeBindingSetup )
+    TreeBindingSetup,
+    Reactive.Banana.Gtk.MapStore.MapDelta(..))
     where
 
 import Graphics.UI.Gtk
 import Control.Monad.Reader
 import Reactive.Banana
 import Reactive.Banana.Frameworks
+import Reactive.Banana.Gtk
+import Reactive.Banana.Gtk.MapStore
+import Data.Map (Map)
 
 type ColumnBinder t m v r a = ReaderT (TreeBindingSetup m v r) (Moment t) a
 
-bindTreeList :: (TreeViewClass view, Frameworks t)
+bindTreeList :: (TreeViewClass view, Frameworks t, Ord k)
     => view -- ^ The TreeView to bind
-    -> Behavior t [row] -- ^ Row data to display
+    -> Map k row -- ^ Initial data
+    -> Event t (MapDelta k row) -- ^ Changes from the event network
     -> (forall model. ColumnBinder t model view row a) -- ^ Action to bind individual columns
-    -> Moment t a
-bindTreeList view rows m = do
-    i <- initial rows
-    -- NOTE: We don't actually monitor the behavior for changes yet!
-    store <- liftIO $ listStoreNew i
+    -> Moment t (Behavior t (Maybe k), a)
+bindTreeList view initialMap deltas m = do
+    store <- newMapStore initialMap deltas
     liftIO $ treeViewSetModel view store
-    runReaderT m $ TreeBindingSetup view store
+    a <- runReaderT m $ TreeBindingSetup store
+    
+    selectionE <-  monitorF view cursorChanged $ const $ do
+                        iter <- treeViewGetSelection view >>= treeSelectionGetSelected
+                        case iter of Nothing -> return Nothing; Just i -> getKeyFromIter store i
+    return (stepper Nothing selectionE, a)                   
 data TreeBindingSetup model view row where
     TreeBindingSetup :: (TreeViewClass view,
                          TreeModelClass (model row),
                          TypedTreeModelClass model)
-                     => { tbsView :: view
-                        , tbsModel :: model row 
-                        } 
+                     => model row 
                      -> TreeBindingSetup model view row
 
 bindCol' :: (Frameworks t)
@@ -42,7 +47,7 @@ bindCol' :: (Frameworks t)
     -> ColumnBinder t m v row ()
 bindCol' r col f = ask >>= \setup -> 
     case setup of -- unwrap the GADT to get our typeclass contexts
-        (TreeBindingSetup _ model) -> liftIO $ mkRenderer r col f model
+        (TreeBindingSetup model) -> liftIO $ mkRenderer r col f model
     
 bindTextCol :: (Frameworks t) 
     => TreeViewColumn -- ^ the column to bind
