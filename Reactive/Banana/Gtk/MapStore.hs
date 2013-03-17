@@ -3,7 +3,7 @@ module Reactive.Banana.Gtk.MapStore (
     MapStore
   , newMapStore 
   , MapDelta(..)
-  , getKeyFromIter
+  , getKeyValueFromIter
   ) where
 
 import Reactive.Banana
@@ -121,9 +121,9 @@ tryElemAt n m = case Map.size m of
     s | s > n -> Just $ Map.elemAt n m
     _ -> Nothing
         
-getKeyFromIter :: (Ord k) => MapStore k a -> TreeIter -> IO (Maybe k)
-getKeyFromIter (MapStore self) (TreeIter _ n _ _) = 
-    liftM (liftM fst . tryElemAt (fromIntegral n) . currentMap) 
+getKeyValueFromIter :: (Ord k) => MapStore k a -> TreeIter -> IO (Maybe (k,a))
+getKeyValueFromIter (MapStore self) (TreeIter _ n _ _) = 
+    liftM (tryElemAt (fromIntegral n) . currentMap) 
         $ readIORef $ customStoreGetPrivate self
 
 applyDelta :: Ord k => MapDelta k a -> Map k a -> Map k a

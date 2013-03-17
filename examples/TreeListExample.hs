@@ -10,6 +10,7 @@ import Reactive.Banana.Gtk.MapStore
 import Control.Monad (liftM) 
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Control.Error
 
 entryText' ::
     (Frameworks t, EditableClass o, EntryClass o)
@@ -28,25 +29,37 @@ test = do
     
     addButton <- builderGetObject builder castToButton "addItem"
     delButton <- builderGetObject builder castToButton "deleteItem"
+    changeButton <- builderGetObject builder castToButton "changeItem"
+    
     newItemName <- builderGetObject builder castToEntry "newItemName"
     
+    outputLabel <- builderGetObject builder castToLabel "label"
+    
     network <- compile $ do
-        itemNameE <- entryText' newItemName
-        itemAddE <- event0 addButton buttonActivated
-        itemDelE <- event0 delButton  buttonActivated
+        nameB <- liftM (stepper "") $ entryText' newItemName
+        addTrigger <- event0 addButton buttonActivated
+        delTrigger <- event0 delButton  buttonActivated
+        changeTrigger <- event0 changeButton  buttonActivated
         
         rec 
             let theList = Map.fromList [(10, "one"), (11, "two")]
-                itemNameB = stepper "" itemNameE
-                newIdE = accumE 11 $ (+ 1) <$ itemAddE
-                additionE = (flip MapSet) <$> itemNameB <@> newIdE
-                deletionB = liftM MapRemove <$> selection
-                deletionE = filterJust $ deletionB <@ itemDelE
-                deltas = union additionE deletionE
+                
+                newIdE = accumE 11 $ (+ 1) <$ addTrigger
+                
+                selectedKeyB = liftA fst <$> selection
+                selectedValueB = liftA snd <$> selection
+                additionE = (flip MapSet) <$> nameB <@> newIdE
+                
+                deletionB = liftA (MapRemove) <$> selectedKeyB
+                deletionE = filterJust $ deletionB <@ delTrigger
+                
+                changeB = liftA2 MapSet <$> (liftA fst <$> selection) <*> (Just <$> nameB)
+                changeE = filterJust $ changeB <@ changeTrigger
+                deltas = additionE `union` deletionE `union` changeE    
             (selection, _) <- bindTreeList view theList deltas $ do
                 bindTextCol column id
             
-        return ()
+        sink outputLabel [labelLabel :== (fromMaybe "") <$>selectedValueB]
         --reactimate $ (putStrLn . show) <$> changes selection
     actuate network
     

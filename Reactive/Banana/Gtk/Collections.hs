@@ -23,15 +23,15 @@ bindTreeList :: (TreeViewClass view, Frameworks t, Ord k)
     -> Map k row -- ^ Initial data
     -> Event t (MapDelta k row) -- ^ Changes from the event network
     -> (forall model. ColumnBinder t model view row a) -- ^ Action to bind individual columns
-    -> Moment t (Behavior t (Maybe k), a)
+    -> Moment t (Behavior t (Maybe (k, row)), a)
 bindTreeList view initialMap deltas m = do
     store <- newMapStore initialMap deltas
     liftIO $ treeViewSetModel view store
     a <- runReaderT m $ TreeBindingSetup store
     
     selectionE <-  monitorF view cursorChanged $ const $ do
-                        iter <- treeViewGetSelection view >>= treeSelectionGetSelected
-                        case iter of Nothing -> return Nothing; Just i -> getKeyFromIter store i
+        iter <- treeViewGetSelection view >>= treeSelectionGetSelected
+        case iter of Nothing -> return Nothing; Just i -> getKeyValueFromIter store i
     return (stepper Nothing selectionE, a)                   
 data TreeBindingSetup model view row where
     TreeBindingSetup :: (TreeViewClass view,
