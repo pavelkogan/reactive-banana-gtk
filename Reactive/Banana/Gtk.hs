@@ -1,7 +1,7 @@
 {-# LANGUAGE ExistentialQuantification, RankNTypes #-}
 module Reactive.Banana.Gtk (
   AttrBinding(..), eventM, event0, event1, event2, event3,
-  monitorF, monitorAttr, pollAttr, sink
+  monitorF, monitorAttr, pollAttr, timer, sink
 ) where
 
 import Reactive.Banana
@@ -11,6 +11,17 @@ import qualified System.Glib.Attributes as Attrs
 import System.Glib.Signals (Signal, on, signalDisconnect)
 
 import qualified Graphics.UI.Gtk as Gtk
+
+-- | Emit periodic events using a GTK timer.  The timer
+--   (probably?) begins immediately when the EventNetwork is 'compile'd.
+timer :: (Frameworks t)
+    => Int -- ^ Time, in msec, between event firings
+    -> Moment t (Event t ())
+timer period = fromAddHandler $ const $ do
+    callbackId <- Gtk.timeoutAdd 
+        (return True) -- don't stop firing until removed
+        period
+    return $ Gtk.timeoutRemove callbackId
 
 eventM :: (Frameworks t, Gtk.GObjectClass self)
     => self
