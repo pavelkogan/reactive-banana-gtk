@@ -1,7 +1,7 @@
 {-# LANGUAGE ExistentialQuantification, RankNTypes #-}
 module Reactive.Banana.Gtk (
-  AttrBinding(..), eventM, event0, event1, event2, event3,
-  monitorF, monitorAttr, pollAttr, timer, sink
+  AttrBinding(..), {- eventM, -} event0, event1, event2, event3,
+  monitorAttr, pollAttr, sink
 ) where
 
 import Reactive.Banana
@@ -23,16 +23,17 @@ timer period = fromAddHandler $ const $ do
         period
     return $ Gtk.timeoutRemove callbackId
 
+{-
 eventM :: (Frameworks t, Gtk.GObjectClass self)
     => self
     -> Signal self (Gtk.EventM a Bool)
     -> Gtk.EventM a b
     -> Moment t (Event t b)
 eventM self signal m = 
-    fromAddHandler $ const $ do
-        callbackId <- on self signal $ m >> return False
+    fromAddHandler $ \e -> do
+        callbackId <- on self signal $ m >> return False -- e is not used here!
         return $ signalDisconnect callbackId
-            
+-}
 eventN :: (Frameworks t, Gtk.GObjectClass self) 
     => ((a -> IO ()) -> callback) 
     -> self
