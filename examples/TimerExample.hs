@@ -16,21 +16,31 @@ runStateReactive :: (Frameworks t)
 runStateReactive stateM s xs =
     mapAccum s $ (runState . stateM) <$> xs
     
-incrementFrom :: a -> State Int ()
-incrementFrom = const $ do
-    v <- get
-    put $ v + 1
+incrementReset :: Bool -> State Int ()
+incrementReset False = get >>= (put . (+ 1))
+incrementReset True = put 0
     
 test :: IO ()
 test = do
     initGUI
     window <- windowNew
+    box <- vBoxNew False 0
+    containerAdd window box
+    startButton <- buttonNewWithLabel "Start"
+    stopButton <- buttonNewWithLabel "Stop"
+    resetButton <- buttonNewWithLabel "Reset"
     label <- labelNew Nothing
-    containerAdd window label
+    mapM (containerAdd box) [startButton, stopButton, resetButton]
+    containerAdd box label
     
     network <- compile $ do
-        ticks <- timer 500
-        let nums = (liftA show . snd) $ runStateReactive incrementFrom 0 ticks
+        start <- event0 startButton buttonActivated
+        stop <- event0 stopButton buttonActivated
+        reset <- event0 resetButton buttonActivated
+        let control = (StartTimer <$ start) `union` (StopTimer <$ stop)
+        ticks <- timerWhen control 500
+        let ticksWithIncrement = (True <$ reset) `union` (False <$ ticks)
+            nums = (liftA show . snd) $ runStateReactive incrementReset 0 ticksWithIncrement
         sink label [labelLabel :== nums]
     
     actuate network
