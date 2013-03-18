@@ -59,7 +59,7 @@ test = do
             (selection, _) <- bindTreeList view theList deltas $ do
                 bindTextCol column id
             
-        sink outputLabel [labelLabel :== (fromMaybe "") <$>selectedValueB]
+        sink outputLabel [labelLabel :== (fromMaybe "") <$> selectedValueB]
         --reactimate $ (putStrLn . show) <$> changes selection
     actuate network
     
