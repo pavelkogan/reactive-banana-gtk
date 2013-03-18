@@ -1,6 +1,6 @@
 {-# LANGUAGE ExistentialQuantification, RankNTypes #-}
 module Reactive.Banana.Gtk (
-  AttrBinding(..), eventM, event0, event1, event2, event3,
+  AttrBinding(..), {- eventM, -} event0, event1, event2, event3,
   monitorAttr, pollAttr, sink
 ) where
 
@@ -12,6 +12,7 @@ import System.Glib.Signals (Signal, on, signalDisconnect)
 
 import qualified Graphics.UI.Gtk as Gtk
 
+{-
 eventM :: (Frameworks t, Gtk.GObjectClass self)
     => self
     -> Signal self (Gtk.EventM a Bool)
@@ -19,9 +20,9 @@ eventM :: (Frameworks t, Gtk.GObjectClass self)
     -> Moment t (Event t b)
 eventM self signal m = 
     fromAddHandler $ \e -> do
-        callbackId <- on self signal $ m >> return False
+        callbackId <- on self signal $ m >> return False -- e is not used here!
         return $ signalDisconnect callbackId
-            
+-}
 eventN :: (Frameworks t, Gtk.GObjectClass self) 
     => ((a -> IO ()) -> callback) 
     -> self
