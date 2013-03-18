@@ -37,8 +37,8 @@ test = do
         start <- event0 startButton buttonActivated
         stop <- event0 stopButton buttonActivated
         reset <- event0 resetButton buttonActivated
-        let control = (StartTimer <$ start) `union` (StopTimer <$ stop)
-        ticks <- timerWhen control 500
+        let control = (StartIntervals <$ start) `union` (StopIntervals <$ stop)
+        ticks <- intervalsWithControl control 500
         let ticksWithIncrement = (True <$ reset) `union` (False <$ ticks)
             nums = (liftA show . snd) $ runStateReactive incrementReset 0 ticksWithIncrement
         sink label [labelLabel :== nums]

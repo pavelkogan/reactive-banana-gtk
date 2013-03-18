@@ -2,7 +2,7 @@
 module Reactive.Banana.Gtk (
   AttrBinding(..), {- eventM, -} event0, event1, event2, event3,
   monitorAttr, monitorF, pollAttr, sink,
-  timer, timerWhen, TimerControl(..)
+  intervals, intervalsWithControl, IntervalControl(..)
 ) where
 
 import Data.IORef
@@ -17,31 +17,35 @@ import qualified Graphics.UI.Gtk as Gtk
 
 -- | Emit periodic events using a GTK timer.  The timer
 --   (probably?) begins immediately when the EventNetwork is 'compile'd.
-timer :: (Frameworks t)
+intervals :: (Frameworks t)
     => Int -- ^ Time, in msec, between event firings
     -> Moment t (Event t ())
-timer period = fromAddHandler $ \rbCallback -> do
+intervals period = fromAddHandler $ \rbCallback -> do
     callbackId <- Gtk.timeoutAdd 
         (rbCallback () >> return True) -- don't stop firing until removed
         period
     return $ Gtk.timeoutRemove callbackId
 
-data TimerControl = StartTimer | StopTimer
-timerWhen :: (Frameworks t)
-    => Event t TimerControl
+data IntervalControl = StartIntervals | StopIntervals
+-- | Emit periodic events using a GTK timer.  This timer may be started and stopped
+--   with an input Event.  It does not begin until it receives a StartTimer input.
+--   If it receives a StartTimer while the timer is already running, the current
+--   timer is restarted.
+intervalsWithControl :: (Frameworks t)
+    => Event t IntervalControl -- ^ Controller to start or stop timer
     -> Int -- ^ Time, in msec, between event firings
     -> Moment t (Event t ())
-timerWhen control period = do
+intervalsWithControl control period = do
     banananHandlerRef <- liftIO $ newIORef undefined
     timerRef <- liftIO $ newIORef Nothing
-    let f StartTimer = do
-            f StopTimer  -- Any concern regarding race conditions?
+    let f StartIntervals = do
+            f StopIntervals  -- Any concern regarding race conditions?
             newTimer <- (flip Gtk.timeoutAdd) period $ do
                 bananaHandler <- readIORef banananHandlerRef
                 bananaHandler ()
                 return True
             writeIORef timerRef $ Just newTimer
-        f StopTimer = do
+        f StopIntervals = do
             currentTimer <- readIORef timerRef
             case currentTimer of
                 Nothing -> return ()
@@ -50,7 +54,7 @@ timerWhen control period = do
     -- I hope there's no chance of running f before the handler is registered.
     fromAddHandler $ \bananaHandler -> do
         liftIO $ writeIORef banananHandlerRef bananaHandler
-        return $ f StopTimer
+        return $ f StopIntervals
 
 {-
 eventM :: (Frameworks t, Gtk.GObjectClass self)
