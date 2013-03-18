@@ -1,8 +1,11 @@
 {-# LANGUAGE ExistentialQuantification, RankNTypes #-}
 module Reactive.Banana.Gtk (
   AttrBinding(..), {- eventM, -} event0, event1, event2, event3,
-  monitorAttr, pollAttr, sink
+  monitorAttr, monitorF, pollAttr, sink,
+  timer, timerWhen, TimerControl(..)
 ) where
+
+import Data.IORef
 
 import Reactive.Banana
 import Reactive.Banana.Frameworks
@@ -22,6 +25,32 @@ timer period = fromAddHandler $ \rbCallback -> do
         (rbCallback () >> return True) -- don't stop firing until removed
         period
     return $ Gtk.timeoutRemove callbackId
+
+data TimerControl = StartTimer | StopTimer
+timerWhen :: (Frameworks t)
+    => Event t TimerControl
+    -> Int -- ^ Time, in msec, between event firings
+    -> Moment t (Event t ())
+timerWhen control period = do
+    banananHandlerRef <- liftIO $ newIORef undefined
+    timerRef <- liftIO $ newIORef Nothing
+    let f StartTimer = do
+            f StopTimer  -- Any concern regarding race conditions?
+            newTimer <- (flip Gtk.timeoutAdd) period $ do
+                bananaHandler <- readIORef banananHandlerRef
+                bananaHandler ()
+                return True
+            writeIORef timerRef $ Just newTimer
+        f StopTimer = do
+            currentTimer <- readIORef timerRef
+            case currentTimer of
+                Nothing -> return ()
+                Just t -> Gtk.timeoutRemove t
+    reactimate $ f <$> control 
+    -- I hope there's no chance of running f before the handler is registered.
+    fromAddHandler $ \bananaHandler -> do
+        liftIO $ writeIORef banananHandlerRef bananaHandler
+        return $ f StopTimer
 
 {-
 eventM :: (Frameworks t, Gtk.GObjectClass self)
