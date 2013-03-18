@@ -17,9 +17,9 @@ import qualified Graphics.UI.Gtk as Gtk
 timer :: (Frameworks t)
     => Int -- ^ Time, in msec, between event firings
     -> Moment t (Event t ())
-timer period = fromAddHandler $ const $ do
+timer period = fromAddHandler $ \rbCallback -> do
     callbackId <- Gtk.timeoutAdd 
-        (return True) -- don't stop firing until removed
+        (rbCallback () >> return True) -- don't stop firing until removed
         period
     return $ Gtk.timeoutRemove callbackId
 
