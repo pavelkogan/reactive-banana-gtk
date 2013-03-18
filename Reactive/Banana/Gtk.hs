@@ -45,7 +45,7 @@ timerWhen control period = do
             currentTimer <- readIORef timerRef
             case currentTimer of
                 Nothing -> return ()
-                Just t -> Gtk.timeoutRemove t
+                Just t -> Gtk.timeoutRemove t >> writeIORef timerRef Nothing
     reactimate $ f <$> control 
     -- I hope there's no chance of running f before the handler is registered.
     fromAddHandler $ \bananaHandler -> do
