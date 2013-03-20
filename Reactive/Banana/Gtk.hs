@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, RankNTypes #-}
+{-# LANGUAGE ExistentialQuantification, Rank2Types #-}
 module Reactive.Banana.Gtk (
   AttrBinding(..), {- eventM, -} event0, event1, event2, event3,
   monitorAttr, monitorF, pollAttr, sink,
