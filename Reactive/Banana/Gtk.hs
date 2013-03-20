@@ -79,49 +79,58 @@ eventN f self signal =
         callbackId <- on self signal callback
         return $ signalDisconnect callbackId
 
+-- | Bind a nullary GTK signal, e.g. 'buttonPress', as an @Event t ()@
 event0 :: (Frameworks t, Gtk.GObjectClass self) 
     => self
     -> Signal self (IO ())
     -> Moment t (Event t ())
 event0 = eventN ($ ())
 
+-- | Bind a GTK signal that contains one value
 event1 :: (Frameworks t, Gtk.GObjectClass self) 
     => self
     -> Signal self (a -> IO ())
     -> Moment t (Event t a)
 event1 = eventN id
 
+-- | Bind a GTK signal that contains two values
 event2 :: (Frameworks t, Gtk.GObjectClass self) 
     => self
     -> Signal self (a -> b -> IO ())
     -> Moment t (Event t (a, b))
 event2 = eventN curry
 
+-- | Bind a GTK signal that contains three values
 event3 :: (Frameworks t, Gtk.GObjectClass self) 
     => self
     -> Signal self (a -> b -> c -> IO ())
     -> Moment t (Event t (a, b, c))
 event3 = eventN $ \f a b c -> f (a, b, c)
 
+-- | Create an Event that occurs whenever a certain 'Signal' triggers, but containing
+--   the current value of a (potentially-unrelated) 'Gtk.Attr'.  Useful, e.g., for widgets like
+--   'Gtk.Entry', where the update signal ('Gtk.editableChanged') does not contain the new
+--   value, which is instead in 'Gtk.entryText'.
 monitorAttr :: (Frameworks t, Gtk.GObjectClass self)
     => self
     -> Signal self (IO ()) -- ^ Signal indicating when to read the attribute
     -> ReadWriteAttr self a b
     -> Moment t (Event t a)
-monitorAttr self signal attr =
-    fromAddHandler $ \e -> do
-        callbackId <- on self signal $ Attrs.get self attr >>= e >> return ()
-        return $ signalDisconnect callbackId
+monitorAttr self signal attr = monitorF self signal $ const $ Attrs.get self attr 
 
+-- | Generalized version of 'monitorAttr', allowing arbitrary queries against the widget.
+--   For when a desired property is not exposed as an 'Gtk.Attr'.
 monitorF :: (Frameworks t, Gtk.GObjectClass self)
     => self
-    -> Signal self (IO ()) -- ^ Signal indicating when to read the attribute
+    -> Signal self (IO ()) -- ^ Signal indicating when to run the query
     -> (self -> IO a)
     -> Moment t (Event t a)
 monitorF self signal f =
     fromAddHandler $ \e -> do
         callbackId <- on self signal $ f self >>= e >> return ()
         return $ signalDisconnect callbackId
+        
+-- | Turn an 'Gtk.Attr' into an 'Event' by polling.  Avoid using this.
 pollAttr :: (Frameworks t) => self -> ReadWriteAttr self a b -> Moment t (Behavior t a)
 pollAttr widget attr = fromPoll $ liftIO $ Attrs.get widget attr
 
