@@ -1,22 +1,26 @@
-Name:		reactive-banana-gtk
-Version:	0.0.2
-License:	MIT
-Author:		Emon Tsukimiya
-Maintainer: Christian Conkle <christian at conkle.org>
-Category:	FRP, GUI
-Synopsis:	reactive-banana binding to GTK+
-Cabal-Version:	>= 1.6
-Build-Type:	Simple
+Name:           reactive-banana-gtk
+Version:        0.0.2
+License:        MIT
+Author:         Emon Tsukimiya
+Maintainer:     Christian Conkle <christian at conkle.org>
+Category:       FRP, GUI
+Synopsis:       reactive-banana binding to GTK+
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
 
 Source-repository head
-    type:               git
-    location:           git://github.com/conklech/reactive-banana-gtk.git
-    
+  type:      git
+  location:  git://github.com/conklech/reactive-banana-gtk.git
+
+flag buildExamples
+  description: Build example executables
+  default:     False
 Library
-    Extensions:         Rank2Types, ExistentialQuantification
-    Build-Depends:	    base, mtl >= 2 && < 3, containers, errors,
-                        reactive-banana >= 0.7 && < 0.8, 
+  Extensions:       Rank2Types, ExistentialQuantification
+  Build-Depends:    
+                        base, mtl >= 2 && < 3, containers, errors,
+                        reactive-banana >= 0.7 && < 0.8,
                         glib, gtk >= 0.12.0 && < 0.13
-    GHC-Options:        -Wall
-    Exposed-Modules:	Reactive.Banana.Gtk, Reactive.Banana.Gtk.Collections
-    Other-Modules:      Reactive.Banana.Gtk.MapStore
+  GHC-Options:      -Wall
+  Exposed-Modules:  Reactive.Banana.Gtk, Reactive.Banana.Gtk.Collections
+  Other-Modules:    Reactive.Banana.Gtk.MapStore
