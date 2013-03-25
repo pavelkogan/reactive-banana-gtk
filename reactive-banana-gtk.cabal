@@ -19,3 +19,4 @@ Library
                         glib, gtk >= 0.12.0 && < 0.13
     GHC-Options:        -Wall
     Exposed-Modules:	Reactive.Banana.Gtk, Reactive.Banana.Gtk.Collections
+    Other-Modules:      Reactive.Banana.Gtk.MapStore
