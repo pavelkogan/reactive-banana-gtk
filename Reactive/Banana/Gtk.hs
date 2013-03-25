@@ -14,6 +14,7 @@ import qualified System.Glib.Attributes as Attrs
 import System.Glib.Signals (Signal, on, signalDisconnect)
 
 import qualified Graphics.UI.Gtk as Gtk
+import Control.Monad (void)
 
 -- | Emit periodic events using a GTK timer.  The timer
 --   (probably?) begins immediately when the EventNetwork is 'compile'd.
@@ -127,7 +128,7 @@ monitorF :: (Frameworks t, Gtk.GObjectClass self)
     -> Moment t (Event t a)
 monitorF self signal f =
     fromAddHandler $ \e -> do
-        callbackId <- on self signal $ f self >>= e >> return ()
+        callbackId <- on self signal $ void (f self >>= e)
         return $ signalDisconnect callbackId
         
 -- | Turn an 'Gtk.Attr' into an 'Event' by polling.  Avoid using this.
