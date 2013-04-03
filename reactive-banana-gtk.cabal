@@ -5,6 +5,7 @@ Author:         Emon Tsukimiya
 Maintainer:     Christian Conkle <christian at conkle.org>
 Category:       FRP, GUI
 Synopsis:       reactive-banana binding to GTK+
+Stability:      provisional
 Cabal-Version:  >= 1.8
 Build-Type:     Simple
 
@@ -12,9 +13,6 @@ Source-repository head
   type:      git
   location:  git://github.com/conklech/reactive-banana-gtk.git
 
-flag buildExamples
-  description: Build example executables
-  default:     False
 Library
   Extensions:       Rank2Types, ExistentialQuantification
   Build-Depends:    
