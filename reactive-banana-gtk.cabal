@@ -2,7 +2,8 @@ Name:           reactive-banana-gtk
 Version:        0.0.2
 License:        MIT
 Author:         Emon Tsukimiya
-Maintainer:     Christian Conkle <christian at conkle.org>
+                Christian Conkle <christian at conkle.org>
+Maintainer:     Pavel Kogan <pkogan@gmail.com>
 Category:       FRP, GUI
 Synopsis:       reactive-banana binding to GTK+
 Stability:      provisional
@@ -11,7 +12,7 @@ Build-Type:     Simple
 
 Source-repository head
   type:      git
-  location:  git://github.com/conklech/reactive-banana-gtk.git
+  location:  git://github.com/pavelkogan/reactive-banana-gtk.git
 
 Library
   Extensions:       Rank2Types, ExistentialQuantification
