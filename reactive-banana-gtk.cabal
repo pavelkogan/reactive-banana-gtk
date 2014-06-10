@@ -15,10 +15,14 @@ Source-repository head
 
 Library
   Extensions:       Rank2Types, ExistentialQuantification
-  Build-Depends:    
-                        base, mtl >= 2 && < 3, containers, errors,
-                        reactive-banana >= 0.7 && < 0.8,
-                        glib, gtk >= 0.12.0 && < 0.13
+  Build-Depends:    base,
+                    mtl >= 2 && < 3,
+                    containers,
+                    errors,
+                    reactive-banana >= 0.7 && < 0.8,
+                    glib,
+                    gtk >= 0.12.0 && < 0.13
   GHC-Options:      -Wall
-  Exposed-Modules:  Reactive.Banana.Gtk, Reactive.Banana.Gtk.Collections
+  Exposed-Modules:  Reactive.Banana.Gtk,
+                    Reactive.Banana.Gtk.Collections
   Other-Modules:    Reactive.Banana.Gtk.MapStore
