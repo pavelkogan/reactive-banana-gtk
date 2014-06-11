@@ -21,8 +21,8 @@ import Control.Monad (void)
 intervals :: (Frameworks t)
     => Int -- ^ Time, in msec, between event firings
     -> Moment t (Event t ())
-intervals period = fromAddHandler $ \rbCallback -> do
-    callbackId <- Gtk.timeoutAdd 
+intervals period = fromAddHandler $ AddHandler $ \rbCallback -> do
+    callbackId <- Gtk.timeoutAdd
         (rbCallback () >> return True) -- don't stop firing until removed
         period
     return $ Gtk.timeoutRemove callbackId
@@ -51,9 +51,9 @@ intervalsWithControl control period = do
             case currentTimer of
                 Nothing -> return ()
                 Just t -> Gtk.timeoutRemove t >> writeIORef timerRef Nothing
-    reactimate $ f <$> control 
+    reactimate $ f <$> control
     -- I hope there's no chance of running f before the handler is registered.
-    fromAddHandler $ \bananaHandler -> do
+    fromAddHandler $ AddHandler $ \bananaHandler -> do
         liftIO $ writeIORef banananHandlerRef bananaHandler
         return $ f StopIntervals
 
@@ -63,46 +63,46 @@ eventM :: (Frameworks t, Gtk.GObjectClass self)
     -> Signal self (Gtk.EventM a Bool)
     -> Gtk.EventM a b
     -> Moment t (Event t b)
-eventM self signal m = 
-    fromAddHandler $ \e -> do
+eventM self signal m =
+    fromAddHandler $ AddHandler $ \e -> do
         callbackId <- on self signal $ m >>= (\r -> liftIO $ e r) >> return False
         return $ signalDisconnect callbackId
 
-eventN :: (Frameworks t, Gtk.GObjectClass self) 
-    => ((a -> IO ()) -> callback) 
+eventN :: (Frameworks t, Gtk.GObjectClass self)
+    => ((a -> IO ()) -> callback)
     -> self
     -> Signal self callback
     -> Moment t (Event t a)
 eventN f self signal =
-    fromAddHandler $ \e -> do
-        let 
+    fromAddHandler $ AddHandler $ \e -> do
+        let
             callback = f e
         callbackId <- on self signal callback
         return $ signalDisconnect callbackId
 
 -- | Bind a nullary GTK signal, e.g. 'buttonPress', as an @Event t ()@
-event0 :: (Frameworks t, Gtk.GObjectClass self) 
+event0 :: (Frameworks t, Gtk.GObjectClass self)
     => self
     -> Signal self (IO ())
     -> Moment t (Event t ())
 event0 = eventN ($ ())
 
 -- | Bind a GTK signal that contains one value
-event1 :: (Frameworks t, Gtk.GObjectClass self) 
+event1 :: (Frameworks t, Gtk.GObjectClass self)
     => self
     -> Signal self (a -> IO ())
     -> Moment t (Event t a)
 event1 = eventN id
 
 -- | Bind a GTK signal that contains two values
-event2 :: (Frameworks t, Gtk.GObjectClass self) 
+event2 :: (Frameworks t, Gtk.GObjectClass self)
     => self
     -> Signal self (a -> b -> IO ())
     -> Moment t (Event t (a, b))
 event2 = eventN curry
 
 -- | Bind a GTK signal that contains three values
-event3 :: (Frameworks t, Gtk.GObjectClass self) 
+event3 :: (Frameworks t, Gtk.GObjectClass self)
     => self
     -> Signal self (a -> b -> c -> IO ())
     -> Moment t (Event t (a, b, c))
@@ -117,7 +117,7 @@ monitorAttr :: (Frameworks t, Gtk.GObjectClass self)
     -> Signal self (IO ()) -- ^ Signal indicating when to read the attribute
     -> ReadWriteAttr self a b
     -> Moment t (Event t a)
-monitorAttr self signal attr = monitorF self signal $ const $ Attrs.get self attr 
+monitorAttr self signal attr = monitorF self signal $ const $ Attrs.get self attr
 
 -- | Generalized version of 'monitorAttr', allowing arbitrary queries against the widget.
 --   For when a desired property is not exposed as an 'Gtk.Attr'.
@@ -127,10 +127,10 @@ monitorF :: (Frameworks t, Gtk.GObjectClass self)
     -> (self -> IO a)
     -> Moment t (Event t a)
 monitorF self signal f =
-    fromAddHandler $ \e -> do
+    fromAddHandler $ AddHandler $ \e -> do
         callbackId <- on self signal $ void (f self >>= e)
         return $ signalDisconnect callbackId
-        
+
 -- | Turn an 'Gtk.Attr' into an 'Event' by polling.  Avoid using this.
 pollAttr :: (Frameworks t) => self -> ReadWriteAttr self a b -> Moment t (Behavior t a)
 pollAttr widget attr = fromPoll $ liftIO $ Attrs.get widget attr
@@ -146,7 +146,7 @@ sink self = mapM_ sink'
       i <- initial xB
       xE <- changes xB
       liftIOLater $ Attrs.set self [attr := i]
-      reactimate $ (\x -> Attrs.set self [attr := x]) <$> xE
+      reactimate' $ (fmap $ \x -> Attrs.set self [attr := x]) <$> xE
 
 -- reactimateEventM :: Event (Ptr a) -> Gtk.EventM a () -> Moment ()
 -- reactimateEventM event reader = reactimate $ (<$> event) $ runReaderT reader

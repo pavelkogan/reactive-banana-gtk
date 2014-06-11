@@ -20,7 +20,7 @@ Library
                     mtl >= 2 && < 3,
                     containers,
                     errors,
-                    reactive-banana >= 0.7 && < 0.8,
+                    reactive-banana >= 0.8 && < 0.9,
                     glib,
                     gtk >= 0.12.0 && < 0.13
   GHC-Options:      -Wall
