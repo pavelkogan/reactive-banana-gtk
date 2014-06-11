@@ -1,6 +1,6 @@
 {-# LANGUAGE ExistentialQuantification, Rank2Types #-}
 module Reactive.Banana.Gtk (
-  AttrBinding(..), eventM, event0, event1, event2, event3,
+  AttrBinding(..), eventM, eventN, event0, event1, event2, event3,
   monitorAttr, monitorF, pollAttr, sink,
   intervals, intervalsWithControl, IntervalControl(..)
 ) where
