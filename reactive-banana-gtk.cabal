@@ -22,7 +22,7 @@ Library
                     errors,
                     reactive-banana >= 0.8 && < 0.9,
                     glib,
-                    gtk >= 0.12.0 && < 0.13
+                    gtk >= 0.12.0 && < 0.14
   GHC-Options:      -Wall
   Exposed-Modules:  Reactive.Banana.Gtk,
                     Reactive.Banana.Gtk.Collections
