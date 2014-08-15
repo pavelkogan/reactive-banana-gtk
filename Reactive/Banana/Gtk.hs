@@ -1,7 +1,7 @@
 {-# LANGUAGE ExistentialQuantification, Rank2Types #-}
 module Reactive.Banana.Gtk (
   AttrBinding(..), eventM, eventN, event0, event1, event2, event3,
-  monitorAttr, monitorF, pollAttr, sink,
+  monitorAttr, monitorF, monitorG, pollAttr, sink,
   intervals, intervalsWithControl, IntervalControl(..)
 ) where
 
@@ -129,6 +129,18 @@ monitorF :: (Frameworks t, Gtk.GObjectClass self)
 monitorF self signal f =
     fromAddHandler $ AddHandler $ \e -> do
         callbackId <- on self signal $ void (f self >>= e)
+        return $ signalDisconnect callbackId
+
+-- | Like monitorF, but takes a signal containing some value which is passed along to the
+--   query.
+monitorG :: (Frameworks t, Gtk.GObjectClass self)
+    => self
+    -> Signal self (b -> IO ()) -- ^ Signal indicating when to run the query
+    -> (self -> b -> IO a)
+    -> Moment t (Event t a)
+monitorG self signal g =
+    fromAddHandler $ AddHandler $ \e -> do
+        callbackId <- on self signal $ \s -> (g self s >>= e)
         return $ signalDisconnect callbackId
 
 -- | Turn an 'Gtk.Attr' into an 'Event' by polling.  Avoid using this.
